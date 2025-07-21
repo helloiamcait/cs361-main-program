@@ -1,0 +1,9 @@
+****************************************************************************
+
+                             HOUSE SEARCH HELPER
+
+		House hunting involves looking at A LOT of houses.
+	      Catalogue the houses you are interested in purchasing!
+		Create a list of houses and track house details!
+
+****************************************************************************
