@@ -1,8 +1,0 @@
-
-----------------------------[     MAIN MENU     ]----------------------------
-
-Choose one of the following actions:
-1 View house list
-2 View house
-3 Add house
-4 Exit

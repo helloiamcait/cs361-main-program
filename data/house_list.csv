@@ -1,2 +1,5 @@
-Address,List Price,Beds,Baths,DOM,List Date ▲
-33 Belcourt Rd,1199000,3,2,7,07/14/25
+Address,List Price,Beds ▲,Baths,DOM,List Date (MM/DD/YYYY)
+657 Hillsdale Ave E,1450000,3,2,10,07/24/2024
+378 Woodfield Rd,800000,3,1,3,02/23/2018
+1600 2nd Street,1500000,4,3,27,04/08/2021
+33 Belcourt Rd,1302000,3,2,8,07/17/2025
