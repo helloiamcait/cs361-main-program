@@ -1,9 +1,7 @@
 import pandas as pd
-import time
 
-def return_columns():
-    house_list = pd.read_csv(f'./data/house_list.csv')
-    columns_list = house_list.columns.tolist()
+def return_columns(dataframe):
+    columns_list = dataframe.columns.tolist()
     columns_dict = {}
 
     for i, column in enumerate(columns_list):
