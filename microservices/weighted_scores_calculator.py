@@ -1,6 +1,6 @@
 import time
 
-COMM_TXTFILE = 'weighted-scores-calculator.txt'
+COMM_TXTFILE = '../pipes/weighted_scores_calculator.txt'
 
 def check_errors(f_lines):
     """Checks for errors in the file and returns an error statement."""

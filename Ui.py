@@ -7,6 +7,23 @@ from fuzzywuzzy import process # type: ignore
 from get_menu import return_menu
 from get_columns import return_columns
 from sort_list import sort_list
+from datetime import datetime
+
+
+def update_dom_values():
+    """
+    Updates all DOM values in the house list CSV to be based on current date.
+    """
+    house_list_df = pd.read_csv("data/house_list.csv")
+    if len(house_list_df) > 0:
+        # Get column names without sort direction symbols
+        dom_col = house_list_df.columns[house_list_df.columns.str.startswith("DOM")][0]
+        list_date_col = house_list_df.columns[house_list_df.columns.str.startswith("List Date")][0]
+
+        # Get DOM values for all houses based on today's date
+        house_list_df[dom_col] = house_list_df[list_date_col].apply(get_days_since_date)
+        house_list_df.to_csv("data/house_list.csv", index=False)
+
 
 def display_intro():
     # Display a message introducing the program
@@ -27,7 +44,8 @@ def display_outtro():
 def setup_priorities():
     house_list_df = pd.read_csv(f'./data/house_list.csv')
     house_columns_list = house_list_df.columns.tolist()
-    if house_columns_list[-1] != "Total score":
+    total_score_col = house_list_df.columns[house_list_df.columns.str.startswith("Total score")][0]
+    if house_columns_list[-1] != total_score_col:
         print("Before we begin, you need to add priority house characterstics and their importance to you.")
 
         valid_input = False
@@ -80,7 +98,8 @@ def view_house_list():
         print("\nYour house list is empty.")
         return_to_main_menu()
     else:
-        # Display House List header
+        
+        
         print(tabulate(house_list, headers = 'keys', tablefmt = 'fancy_outline'))
 
         valid_input = False
@@ -143,9 +162,18 @@ def add_house():
     # Prompt user for house parameters
     print("Enter the following information about the house (or enter ! to cancel)...")
     for num, col in columns_dict.items():
-        if col == "Total score":
+        if col.startswith("Total score"):
             total_score = get_total_score(new_house_list)
             new_house_list.append(total_score)
+        elif col.startswith("List Date (MM/DD/YYYY)"):
+            valid_date = False
+            while not valid_date:
+                input_date = get_input(f"{num}. {col}: ")
+                valid_date = validate_date(input_date)
+            new_house_list.append(input_date)
+        elif col.startswith("DOM"):
+            dom = get_days_since_date(new_house_list[-1])
+            new_house_list.append(dom)
         else:
             new_house_list.append(get_input(f"{num}. {col}: "))
     
@@ -165,6 +193,13 @@ def add_house():
             print("Invalid input. Please enter 'y' or 'n'.")
         
 
+def validate_date(date):
+    date_format = "%Y-%m-%d"
+    try:
+        valid_date = bool(datetime.strptime(date, date_format))
+        return valid_date
+    except ValueError:
+        print("Invalid date format. Please try again.")
 
 def view_house(house_address=None):
     print(f"\n---------------------------[     VIEW HOUSE     ]"\
@@ -416,13 +451,6 @@ def find_match(list_to_search, list_name):
             return_to_main_menu()
 
 
-def get_all_total_scores():
-    """
-    Returns column with total priority score for all houses in the house list.
-    """
-    pass
-
-
 def get_total_score(house_info_list):
     """
     Returns total priority score for the house at the given address.
@@ -432,7 +460,7 @@ def get_total_score(house_info_list):
     num_of_priorities = len(priority_list_df)
     priority_value_list = house_info_list[-num_of_priorities:]
     
-    with open("weighted-scores-calculator-main/weighted-scores-calculator.txt", "w") as calculator_pipe:
+    with open("pipes/weighted_scores_calculator.txt", "w") as calculator_pipe:
         calculator_pipe.write(f"{house_info_list[0]}")
         for i in range(num_of_priorities):
             priority_name = priority_list_df.iloc[i, 0]
@@ -442,18 +470,48 @@ def get_total_score(house_info_list):
     calculator_pipe.close()
     time.sleep(5)
 
-    with open("weighted-scores-calculator-main/weighted-scores-calculator.txt", "r") as calculator_pipe:
+    with open("pipes/weighted_scores_calculator.txt", "r") as calculator_pipe:
         total_score_data = calculator_pipe.read()
     calculator_pipe.close()
     total_score_list = ast.literal_eval(total_score_data)
 
-    with open("weighted-scores-calculator-main/weighted-scores-calculator.txt", "w") as calculator_pipe:
+    with open("pipes/weighted_scores_calculator.txt", "w") as calculator_pipe:
         calculator_pipe.write('')
     calculator_pipe.close()
     return total_score_list[1][-1]
     
 
+def get_days_since_date(input_date):
+    """
+    Returns the number of days since the given date.
+    """
+    # Add the given date to the days since pipe
+    with open("./pipes/days_since_pipe.txt", "w") as days_since_pipe:
+        days_since_pipe.write(input_date)
+    days_since_pipe.close()
+    time.sleep(2)
+    
+    # Get number of days since the given date
+    with open("./pipes/days_since_pipe.txt", "r") as days_since_pipe:
+        days_since_date = days_since_pipe.read()
+    days_since_pipe.close()
+
+    with open("./pipes/days_since_pipe.txt", "w") as days_since_pipe:
+        days_since_pipe.write('')
+    days_since_pipe.close()
+
+    return days_since_date # Integer value
+
+
+def generate_email_content():
+    """
+    Creates a text file with the contents of an email for sharing 
+    house list information.
+    """
+    pass
+
 if __name__ == "__main__":
+    update_dom_values()
     display_intro()
     setup_priorities()
     main_menu()

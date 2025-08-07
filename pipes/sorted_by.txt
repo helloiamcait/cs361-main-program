@@ -1,1 +1,1 @@
-("Beds ▲", True)
+("Total score ▼", False)

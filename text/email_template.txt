@@ -1,0 +1,10 @@
+To: {recipient_email}
+From: {sender_email}
+Subject: Houses of interest
+
+Dear {recipient_name},
+
+{email_content}
+
+Sincerely, 
+{sender_name}
