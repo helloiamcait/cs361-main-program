@@ -78,6 +78,10 @@ def _main_menu_execute(selection):
     elif selection == "3":
         add_house()
     elif selection == "4":
+        draft_email()
+    elif selection == "5":
+        get_highest_scoring_house()
+    elif selection == "6":
         display_outtro()
         sys.exit()
     # Error message for invalid selection
@@ -91,16 +95,15 @@ def _main_menu_execute(selection):
 def view_house_list():
     print(f"\n-------------------------[     VIEW HOUSE LIST     ]"\
           "-------------------------\n")
-    house_list = pd.read_csv(f'./data/house_list.csv')
+    house_list_df = pd.read_csv(f'./data/house_list.csv')
 
     # Check if house list is empty
-    if len(house_list) == 0:
+    if len(house_list_df) == 0:
         print("\nYour house list is empty.")
         return_to_main_menu()
     else:
-        
-        
-        print(tabulate(house_list, headers = 'keys', tablefmt = 'fancy_outline'))
+        no_priorities_df = house_list_df.iloc[:,:6]
+        print(tabulate(no_priorities_df, headers = 'keys', tablefmt = 'fancy_outline'))
 
         valid_input = False
         while not valid_input:
@@ -235,9 +238,6 @@ def _view_house_helper(house_address):
     # Get dictionary of house list column names
     columns_dict = return_columns(house_list_df)
 
-    # Get number of column names in columns dict
-    num_columns = len(columns_dict)
-    
     # Get column names and list numbered
     column_names = []
     for key, value in columns_dict.items():
@@ -372,7 +372,7 @@ def request_menu(menu_name):
     while not valid_input:
         # Prompt user for main menu selection
         selection = get_input(f"\nEnter your choice (1–{menu_len}): ")
-        if int(selection) > menu_len or int(selection) < 0:
+        if not selection.isdigit() or int(selection) > menu_len or int(selection) < 0:
             invalid_input_alert(selection, menu_len)
         else:
             valid_input = True
@@ -503,12 +503,105 @@ def get_days_since_date(input_date):
     return days_since_date # Integer value
 
 
-def generate_email_content():
+def draft_email():
+    """
+    Drafts an email using user input for sending the house list to a recipient.
+    """
+    print(f"\n---------------------------[     DRAFT EMAIL WITH LIST     ]"\
+          f"---------------------------\n")
+    recipient_name = input("Enter the recipient's name: ")
+    recipient_email = input("Enter the recipients email address: ")
+    sender_name = input("Enter your name: ")
+    sender_email = input("Enter your email address: ")
+    email_body = "Below is a list of houses I am interested in purchasing."
+    house_list_df = pd.read_csv(f'./data/house_list.csv')
+    
+    # Get house info for each house
+    house_list_df = pd.read_csv(f'./data/house_list.csv')
+    house_list_str = ''
+    address_col = house_list_df.columns[house_list_df.columns.str.startswith("Address")][0]
+    for index, row in house_list_df.iterrows():
+        house_address = row[address_col]
+        col_name_house_info = get_one_house(house_address)
+        house_list_str += f"\n--------------------------\n🏡 {house_address}\n--------------------------\n"
+        for i in range(1,len(col_name_house_info[0])):
+            house_list_str += f"{col_name_house_info[0][i]}: {col_name_house_info[1][i]}\n"
+
+    email_content_list = [recipient_name, recipient_email, sender_name, sender_email, 
+                          f'{email_body}\n{house_list_str}']
+    email_draft = generate_email_content(email_content_list)
+
+    # Display the formatted email draft
+    print('\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print(f'\n{email_draft}')
+    print('\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
+    return_to_main_menu()
+
+def generate_email_content(email_content_list):
     """
     Creates a text file with the contents of an email for sharing 
     house list information.
     """
-    pass
+
+    with open("pipes/email_content_generator.txt", "w") as email_pipe:
+        email_pipe.write(str(email_content_list))
+    email_pipe.close()
+    time.sleep(2)
+
+    with open("pipes/email_content_generator.txt", "r") as email_pipe:
+        email_draft = email_pipe.read()
+    email_pipe.close()
+
+    with open("pipes/email_content_generator.txt", "w") as email_pipe:
+        email_pipe.write("")
+    email_pipe.close()
+
+    return email_draft
+
+def get_one_house(house_address):
+    # Get house list dataframe
+    house_list_df = pd.read_csv(f'./data/house_list.csv')
+    house_row_list = house_list_df[house_list_df.iloc[:, 0] == house_address].values.flatten().tolist()
+
+    # Get dictionary of house list column names
+    columns_dict = return_columns(house_list_df)
+
+    # Get column names and list numbered
+    column_names = []
+    for key, value in columns_dict.items():
+        column_names.append(value)
+    
+    return(column_names, house_row_list)
+
+
+def get_highest_scoring_house():
+    """
+    Return information about the house with the highest Total Score.
+    """
+    print(f"\n----------------------[     GET HIGHEST SCORING HOUSE     ]"\
+          f"----------------------\n")
+    house_list_df = pd.read_csv(f'./data/house_list.csv')
+    total_score_col_name = house_list_df.columns[house_list_df.columns.str.startswith("Total score")][0]
+
+    with open("pipes/high_score_pipe.txt", "w") as high_score_pipe:
+        high_score_pipe.write(f"../data/house_list.csv,{total_score_col_name}")
+    high_score_pipe.close()
+
+    time.sleep(2)
+    with open("pipes/high_score_pipe.txt", "r") as high_score_pipe:
+        high_score_address = high_score_pipe.read()
+    high_score_pipe.close()
+
+    with open("pipes/high_score_pipe.txt", "w") as high_score_pipe:
+        high_score_pipe.write("")
+    high_score_pipe.close()
+
+    print("\n🏆 The house with the highest total score is...")
+    _view_house_helper(high_score_address)
+    
+    return_to_main_menu()
+
+
 
 if __name__ == "__main__":
     update_dom_values()

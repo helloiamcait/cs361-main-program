@@ -14,7 +14,7 @@ def get_days_since():
         start_date = datetime.strptime(date_input, date_format)
         days_between = current_date-start_date
         
-        with open("./pipes/days_since_pipe.txt", "w") as days_since_pipe:
+        with open("../pipes/days_since_pipe.txt", "w") as days_since_pipe:
             days_since_pipe.write(str(days_between.days))
         days_since_pipe.close()
 
